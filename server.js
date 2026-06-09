@@ -12,7 +12,7 @@ connectDB();
 
 // Middleware Configuration
 app.use(cors({
-  origin: "https://softarch-frontend-fawn.vercel.app/"
+  origin: "https://softarch-frontend-fawn.vercel.app"
 }));
 app.use(express.json());
 
