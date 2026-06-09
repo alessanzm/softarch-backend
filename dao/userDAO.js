@@ -18,7 +18,7 @@ exports.getStudentByMatric = async (email, matricNo) => {
     try {
         return await User.findOne({
             email,
-            matricno: matricNo
+            matricNo
         });
     } catch (err) {
         throw new Error(`Database error in getStudentByMatric: ${err.message}`);
@@ -30,15 +30,15 @@ exports.getStudentByMatric = async (email, matricNo) => {
  */
 exports.createUser = async (name, email, password, role, matricNo) => {
     try {
-        const newUser = new User({
+        const user = new User({
             name,
             email,
             password,
             role,
-            matricno: matricNo || null
+            matricNo: matricNo || null
         });
 
-        return await newUser.save();
+        return await user.save();
     } catch (err) {
         throw new Error(`Database error in createUser: ${err.message}`);
     }
