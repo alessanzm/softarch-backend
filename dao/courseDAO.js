@@ -1,27 +1,23 @@
-const db = require('../config/db'); 
+const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
 
 class CourseDao {
+
     async getCoursesByRole(role, userId) {
         try {
             if (role === 'student') {
-                const queryText = `
-                    SELECT c.courseId, c.title, c.courseCode, c.description 
-                    FROM courses c
-                    INNER JOIN enrollment e ON c.courseId = e.courseId
-                    WHERE e.studentId = ?;
-                `;
-                const [rows] = await db.execute(queryText, [userId]);
-                return rows;
-            } else if (role === 'lecturer') {
-                const [rows] = await db.execute(
-                    'SELECT courseId, title, courseCode, description FROM courses WHERE lecturerId = ?;',
-                    [userId]
-                );
-                return rows;
-            } else {
-                const [rows] = await db.execute('SELECT courseId, title, courseCode, description FROM courses;');
-                return rows;
+                const enrollments = await Enrollment.find({ studentId: userId });
+                const courseIds = enrollments.map(e => e.courseId);
+
+                return await Course.find({ _id: { $in: courseIds } });
             }
+
+            if (role === 'lecturer') {
+                return await Course.find({ lecturerId: userId });
+            }
+
+            return await Course.find();
+
         } catch (err) {
             throw new Error(`Database error in getCoursesByRole: ${err.message}`);
         }
@@ -29,8 +25,12 @@ class CourseDao {
 
     async createCourse(title, courseCode, description, lecturerId) {
         try {
-            const queryText = 'INSERT INTO courses (title, courseCode, description, lecturerId) VALUES (?, ?, ?, ?);';
-            await db.execute(queryText, [title, courseCode, description, lecturerId !== 0 ? lecturerId : null]);
+            return await Course.create({
+                title,
+                courseCode,
+                description,
+                lecturerId: lecturerId || null
+            });
         } catch (err) {
             throw new Error(`Database error in createCourse: ${err.message}`);
         }
@@ -38,8 +38,11 @@ class CourseDao {
 
     async updateCourse(courseId, title, courseCode, description) {
         try {
-            const queryText = 'UPDATE courses SET title = ?, courseCode = ?, description = ? WHERE courseId = ?;';
-            await db.execute(queryText, [title, courseCode, description, courseId]);
+            return await Course.findByIdAndUpdate(
+                courseId,
+                { title, courseCode, description },
+                { new: true }
+            );
         } catch (err) {
             throw new Error(`Database error in updateCourse: ${err.message}`);
         }
@@ -47,7 +50,7 @@ class CourseDao {
 
     async deleteCourse(courseId) {
         try {
-            await db.execute('DELETE FROM courses WHERE courseId = ?;', [courseId]);
+            return await Course.findByIdAndDelete(courseId);
         } catch (err) {
             throw new Error(`Database error in deleteCourse: ${err.message}`);
         }
@@ -55,8 +58,7 @@ class CourseDao {
 
     async getCourseByCode(courseCode) {
         try {
-            const [rows] = await db.execute('SELECT courseId, courseCode FROM courses WHERE courseCode = ?;', [courseCode]);
-            return rows[0];
+            return await Course.findOne({ courseCode });
         } catch (err) {
             throw new Error(`Database error in getCourseByCode: ${err.message}`);
         }
@@ -64,11 +66,8 @@ class CourseDao {
 
     async checkEnrollment(studentId, courseId) {
         try {
-            const [rows] = await db.execute(
-                'SELECT * FROM enrollment WHERE studentId = ? AND courseId = ?;', 
-                [studentId, courseId]
-            );
-            return rows.length > 0;
+            const existing = await Enrollment.findOne({ studentId, courseId });
+            return !!existing;
         } catch (err) {
             throw new Error(`Database error in checkEnrollment: ${err.message}`);
         }
@@ -76,10 +75,7 @@ class CourseDao {
 
     async enrollStudent(studentId, courseId) {
         try {
-            await db.execute(
-                'INSERT INTO enrollment (studentId, courseId) VALUES (?, ?);', 
-                [studentId, courseId]
-            );
+            return await Enrollment.create({ studentId, courseId });
         } catch (err) {
             throw new Error(`Database error in enrollStudent: ${err.message}`);
         }
