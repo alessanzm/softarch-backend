@@ -3,15 +3,38 @@ const router = express.Router();
 const courseDAO = require('../dao/courseDAO');
 
 router.get('/', async (req, res) => {
-const role = req.query.role;
-const userId = req.query.userId;
+const Course = require('../models/Course'); 
 
-if (role === 'student' && userId) {
-    const studentIdNum = parseInt(userId); 
-    
-    const enrolledCourses = await Course.find({ students: studentIdNum }); 
-    return res.json(enrolledCourses);
-}
+exports.getCourses = async (req, res) => {
+    try {
+        const { role, userId } = req.query;
+
+        if (role === 'student' && userId) {
+            const studentIdNum = parseInt(userId);
+
+            const enrolledCourses = await Course.find({ 
+                students: studentIdNum 
+            });
+            return res.status(200).json(enrolledCourses);
+        }
+
+        if (role === 'lecturer' && userId) {
+            const lecturerIdNum = parseInt(userId);
+
+            const lecturerCourses = await Course.find({ 
+                lecturerId: lecturerIdNum 
+            });
+            return res.status(200).json(lecturerCourses);
+        }
+
+        const allCourses = await Course.find({});
+        return res.status(200).json(allCourses);
+
+    } catch (error) {
+        console.error("Ralat Backend:", error);
+        return res.status(500).json({ error: "Internal Server Error dalam pemprosesan data kursus." });
+    }
+};
 });
 
 router.post('/', async (req, res) => {
