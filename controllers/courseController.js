@@ -3,14 +3,15 @@ const router = express.Router();
 const courseDAO = require('../dao/courseDAO');
 
 router.get('/', async (req, res) => {
-    const { role, userId } = req.query;
+const role = req.query.role;
+const userId = req.query.userId;
 
-    try {
-        const matchingCourses = await courseDAO.getCoursesByRole(role, userId);
-        return res.json(matchingCourses);
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
-    }
+if (role === 'student' && userId) {
+    const studentIdNum = parseInt(userId); 
+    
+    const enrolledCourses = await Course.find({ students: studentIdNum }); 
+    return res.json(enrolledCourses);
+}
 });
 
 router.post('/', async (req, res) => {
