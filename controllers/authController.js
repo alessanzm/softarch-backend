@@ -43,7 +43,6 @@ exports.login = async (req, res) => {
         }
 
         if (user && await bcrypt.compare(password, user.password)) {
-            // 👇 FIXED: Maps 'user.userId' (matching your database) into both frontend variable variations
             return res.status(200).json({
                 userId: user.userId,
                 user_id: user.userId,
