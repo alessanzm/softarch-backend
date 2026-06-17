@@ -27,15 +27,16 @@ exports.countByRole = async (role) => {
     });
 
 };
-
-exports.createUser = async (name, email, password, role, matricNo) => {
+exports.createUser = async(userId,name,email,password,role,matricNo) {
     try {
         const user = new User({
+            userId,
             name,
             email,
             password,
             role,
-            matricNo: matricNo || null
+            matricNo
+
         });
 
         return await user.save();
