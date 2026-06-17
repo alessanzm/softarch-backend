@@ -1,13 +1,36 @@
 const mongoose = require('mongoose');
 
 const courseSchema = new mongoose.Schema({
-    title: String,
+
+    title: {
+        type: String,
+        required: true
+    },
+
     courseCode: {
         type: String,
+        required: true,
         unique: true
     },
-    description: String,
-    lecturerId: String
-}, { timestamps: true });
+
+    description: {
+        type: String,
+        default: ''
+    },
+
+    lecturerId: {
+        type: String,
+        required: true
+    },
+
+    students: {
+        type: [String],
+        default: []
+    }
+
+}, {
+    timestamps: true
+});
 
 module.exports = mongoose.model('Course', courseSchema);
+```
