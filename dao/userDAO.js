@@ -8,7 +8,6 @@ exports.getUserByEmail = async (email) => {
     }
 };
 
-
 exports.getStudentByMatric = async (email, matricNo) => {
     try {
         return await User.findOne({
@@ -21,12 +20,13 @@ exports.getStudentByMatric = async (email, matricNo) => {
 };
 
 exports.countByRole = async (role) => {
-
-    return await User.countDocuments({
-        role
-    });
-
+    try {
+        return await User.countDocuments({ role });
+    } catch (err) {
+        throw new Error(`Database error in countByRole: ${err.message}`);
+    }
 };
+
 exports.createUser = async (
     userId,
     name,
@@ -34,9 +34,8 @@ exports.createUser = async (
     password,
     role,
     matricNo
-) {
+) => {
     try {
-
         const user = new User({
             userId,
             name,
@@ -49,12 +48,6 @@ exports.createUser = async (
         return await user.save();
 
     } catch (err) {
-
-        throw new Error(
-            `Database error in createUser: ${err.message}`
-        );
-
+        throw new Error(`Database error in createUser: ${err.message}`);
     }
 };
-
-       
