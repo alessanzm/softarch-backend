@@ -11,42 +11,31 @@ GET ALL / GET BY ROLE
 */
 router.get('/', async (req, res) => {
     try {
-
         const { role, userId } = req.query;
 
         // Student view
         if (role === 'student' && userId) {
-
             const courses = await Course.find({
                 students: userId
             });
-
             return res.status(200).json(courses);
         }
 
-        // Lecturer view
         if (role === 'lecturer' && userId) {
-
             const courses = await Course.find({
                 lecturerId: userId
             });
-
             return res.status(200).json(courses);
         }
 
-        // Admin view
         const allCourses = await Course.find({});
-
         return res.status(200).json(allCourses);
 
     } catch (error) {
-
         console.error(error);
-
         return res.status(500).json({
             error: "Internal Server Error"
         });
-
     }
 });
 
@@ -56,7 +45,6 @@ CREATE COURSE
 =================================================
 */
 router.post('/', async (req, res) => {
-
     const {
         title,
         courseCode,
@@ -72,7 +60,6 @@ router.post('/', async (req, res) => {
     }
 
     try {
-
         const course = new Course({
             title,
             courseCode,
@@ -88,27 +75,25 @@ router.post('/', async (req, res) => {
         });
 
     } catch (err) {
-
         return res.status(500).json({
             error: err.message
         });
-
     }
 });
 
 /*
 =================================================
-UPDATE COURSE
+UPDATE COURSE (FIXED: lecturerId included)
 =================================================
 */
 router.put('/:id', async (req, res) => {
-
     const { id } = req.params;
 
     const {
         title,
         courseCode,
         description,
+        lecturerId,
         role
     } = req.body;
 
@@ -119,13 +104,13 @@ router.put('/:id', async (req, res) => {
     }
 
     try {
-
         await Course.findByIdAndUpdate(
             id,
             {
                 title,
                 courseCode,
-                description
+                description,
+                lecturerId
             }
         );
 
@@ -135,11 +120,9 @@ router.put('/:id', async (req, res) => {
         });
 
     } catch (err) {
-
         return res.status(500).json({
             error: err.message
         });
-
     }
 });
 
@@ -149,7 +132,6 @@ DELETE COURSE
 =================================================
 */
 router.delete('/:id', async (req, res) => {
-
     const { id } = req.params;
     const { role } = req.body;
 
@@ -160,7 +142,6 @@ router.delete('/:id', async (req, res) => {
     }
 
     try {
-
         await Course.findByIdAndDelete(id);
 
         return res.status(200).json({
@@ -169,11 +150,9 @@ router.delete('/:id', async (req, res) => {
         });
 
     } catch (err) {
-
         return res.status(500).json({
             error: err.message
         });
-
     }
 });
 
@@ -183,9 +162,7 @@ ENROLL STUDENT
 =================================================
 */
 router.post('/enroll', async (req, res) => {
-
     try {
-
         const {
             courseCode,
             studentId
@@ -212,7 +189,6 @@ router.post('/enroll', async (req, res) => {
         }
 
         course.students.push(studentId);
-
         await course.save();
 
         return res.status(200).json({
@@ -221,11 +197,9 @@ router.post('/enroll', async (req, res) => {
         });
 
     } catch (err) {
-
         return res.status(500).json({
             error: err.message
         });
-
     }
 });
 
