@@ -18,6 +18,21 @@ exports.register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        let generatedId;
+
+        if(role === 'student'){
+            generatedId = matricNo.toUpperCase();
+        }
+        else if(role === 'lecturer'){
+            const count = await userDAO.countByRole('lecturer');
+            generatedId =
+                `UMT${String(count + 1).padStart(3,'0')}`;
+        }
+        else{
+            const count = await userDAO.countByRole('admin');
+            generatedId =
+                `ADM${String(count + 1).padStart(3,'0')}`;
+        }
         await userDAO.createUser(name, email, hashedPassword, role, role === 'student' ? matricNo : null);
 
         return res.status(201).json({ message: "User registered successfully!" });
