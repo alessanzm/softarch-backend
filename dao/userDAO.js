@@ -20,6 +20,13 @@ exports.getStudentByMatric = async (email, matricNo) => {
     }
 };
 
+exports.countByRole = async (role) => {
+
+    return await User.countDocuments({
+        role
+    });
+
+};
 
 exports.createUser = async (name, email, password, role, matricNo) => {
     try {
