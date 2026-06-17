@@ -57,8 +57,4 @@ exports.createUser = async (
     }
 };
 
-        return await user.save();
-    } catch (err) {
-        throw new Error(`Database error in createUser: ${err.message}`);
-    }
-};
+       
