@@ -18,13 +18,12 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    students: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+    students: {
+        type: [String],
         default: []
-    }]
+    }
 }, {
     timestamps: true
 });
 
-module.exports = mongoose.model('Course', courseSchema);
+module.exports = mongoose.model('Course', courseSchema)
