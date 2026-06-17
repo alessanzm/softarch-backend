@@ -1,111 +1,233 @@
 const express = require('express');
 const router = express.Router();
+
+const Course = require('../models/Course');
 const courseDAO = require('../dao/courseDAO');
 
+/*
+=================================================
+GET ALL / GET BY ROLE
+=================================================
+*/
 router.get('/', async (req, res) => {
-const Course = require('../models/Course'); 
-
-exports.getCourses = async (req, res) => {
     try {
+
         const { role, userId } = req.query;
 
+        // Student view
         if (role === 'student' && userId) {
-            const studentIdNum = parseInt(userId);
 
-            const enrolledCourses = await Course.find({ 
-                students: studentIdNum 
+            const courses = await Course.find({
+                students: userId
             });
-            return res.status(200).json(enrolledCourses);
+
+            return res.status(200).json(courses);
         }
 
+        // Lecturer view
         if (role === 'lecturer' && userId) {
-            const lecturerIdNum = parseInt(userId);
 
-            const lecturerCourses = await Course.find({ 
-                lecturerId: lecturerIdNum 
+            const courses = await Course.find({
+                lecturerId: userId
             });
-            return res.status(200).json(lecturerCourses);
+
+            return res.status(200).json(courses);
         }
 
+        // Admin view
         const allCourses = await Course.find({});
+
         return res.status(200).json(allCourses);
 
     } catch (error) {
-        console.error("Ralat Backend:", error);
-        return res.status(500).json({ error: "Internal Server Error dalam pemprosesan data kursus." });
+
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal Server Error"
+        });
+
     }
-};
 });
 
+/*
+=================================================
+CREATE COURSE
+=================================================
+*/
 router.post('/', async (req, res) => {
-    const { title, courseCode, description, lecturerId, role } = req.body;
 
-    if (req.body.role !== 'admin' && req.body.role !== 'lecturer') {
-        return res.status(403).json({ error: "Access Denied: Only Admins or Lecturer can create courses." });
+    const {
+        title,
+        courseCode,
+        description,
+        lecturerId,
+        role
+    } = req.body;
+
+    if (role !== 'admin' && role !== 'lecturer') {
+        return res.status(403).json({
+            error: "Only Admin or Lecturer can create courses."
+        });
     }
 
     try {
-        await courseDAO.createCourse(title, courseCode, description, lecturerId);
-        return res.status(201).json({ success: true, message: "Course successfully added!" });
+
+        const course = new Course({
+            title,
+            courseCode,
+            description,
+            lecturerId
+        });
+
+        await course.save();
+
+        return res.status(201).json({
+            success: true,
+            message: "Course created successfully."
+        });
+
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+
+        return res.status(500).json({
+            error: err.message
+        });
+
     }
 });
 
+/*
+=================================================
+UPDATE COURSE
+=================================================
+*/
 router.put('/:id', async (req, res) => {
-    const { id } = req.params;
-    const { title, courseCode, description, role } = req.body;
 
-    if (req.body.role !== 'admin' && req.body.role !== 'lecturer') {
-        return res.status(403).json({ error: "Access Denied: Only Admins or Lecturer can modify courses." });
+    const { id } = req.params;
+
+    const {
+        title,
+        courseCode,
+        description,
+        role
+    } = req.body;
+
+    if (role !== 'admin' && role !== 'lecturer') {
+        return res.status(403).json({
+            error: "Only Admin or Lecturer can update courses."
+        });
     }
 
     try {
-        await courseDAO.updateCourse(id, title, courseCode, description);
-        return res.json({ success: true, message: "Course updated successfully!" });
+
+        await Course.findByIdAndUpdate(
+            id,
+            {
+                title,
+                courseCode,
+                description
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Course updated successfully."
+        });
+
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+
+        return res.status(500).json({
+            error: err.message
+        });
+
     }
 });
 
+/*
+=================================================
+DELETE COURSE
+=================================================
+*/
 router.delete('/:id', async (req, res) => {
+
     const { id } = req.params;
     const { role } = req.body;
 
-    if (req.body.role !== 'admin' && req.body.role !== 'lecturer') {
-        return res.status(403).json({ error: "Access Denied: Only Admins and Lecturer can remove courses." });
+    if (role !== 'admin' && role !== 'lecturer') {
+        return res.status(403).json({
+            error: "Only Admin or Lecturer can delete courses."
+        });
     }
 
     try {
-        await courseDAO.deleteCourse(id);
-        return res.json({ success: true, message: "Course deleted successfully!" });
+
+        await Course.findByIdAndDelete(id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Course deleted successfully."
+        });
+
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+
+        return res.status(500).json({
+            error: err.message
+        });
+
     }
 });
 
+/*
+=================================================
+ENROLL STUDENT
+=================================================
+*/
 router.post('/enroll', async (req, res) => {
-    const { courseCode, studentId } = req.body;
 
     try {
-        const course = await courseDAO.getCourseByCode(courseCode);
+
+        const {
+            courseCode,
+            studentId
+        } = req.body;
+
+        const course = await Course.findOne({
+            courseCode
+        });
+
         if (!course) {
-            return res.status(404).json({ error: "Course code not found in academic systems." });
+            return res.status(404).json({
+                error: "Course code not found."
+            });
         }
 
-        const realCourseId = course.courseId; 
-
-        const alreadyEnrolled = await courseDAO.checkEnrollment(studentId, realCourseId);
-        if (alreadyEnrolled) {
-            return res.status(400).json({ error: "You are already enrolled in this module." });
+        if (!course.students) {
+            course.students = [];
         }
 
-        await courseDAO.enrollStudent(studentId, realCourseId);
-        return res.json({ success: true, message: "Enrolled successfully!" });
+        if (course.students.includes(studentId)) {
+            return res.status(400).json({
+                error: "Student already enrolled."
+            });
+        }
+
+        course.students.push(studentId);
+
+        await course.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Enrollment successful."
+        });
 
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+
+        return res.status(500).json({
+            error: err.message
+        });
+
     }
 });
 
 module.exports = router;
+```
