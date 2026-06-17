@@ -33,7 +33,14 @@ exports.register = async (req, res) => {
             generatedId =
                 `ADM${String(count + 1).padStart(3,'0')}`;
         }
-        await userDAO.createUser(name, email, hashedPassword, role, role === 'student' ? matricNo : null);
+        await userDAO.createUser(
+            generatedId,
+            name,
+            email,
+            hashedPassword,
+            role,
+            role === 'student' ? matricNo : null
+        );
 
         return res.status(201).json({ message: "User registered successfully!" });
     } catch (err) {
