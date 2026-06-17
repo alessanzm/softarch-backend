@@ -27,17 +27,35 @@ exports.countByRole = async (role) => {
     });
 
 };
-exports.createUser = async(userId,name,email,password,role,matricNo) {
+exports.createUser = async (
+    userId,
+    name,
+    email,
+    password,
+    role,
+    matricNo
+) {
     try {
+
         const user = new User({
             userId,
             name,
             email,
             password,
             role,
-            matricNo
-
+            matricNo: matricNo || null
         });
+
+        return await user.save();
+
+    } catch (err) {
+
+        throw new Error(
+            `Database error in createUser: ${err.message}`
+        );
+
+    }
+};
 
         return await user.save();
     } catch (err) {
