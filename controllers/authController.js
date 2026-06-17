@@ -44,8 +44,8 @@ exports.login = async (req, res) => {
 
         if (user && await bcrypt.compare(password, user.password)) {
             return res.status(200).json({
-                userId: user.userId,
-                user_id: user.userId,
+                userId: user._Id,
+                user_id: user._Id,
                 name: user.name,
                 user_name: user.name,
                 role: user.role,
