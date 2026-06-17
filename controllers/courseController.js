@@ -4,7 +4,7 @@ const Course = require('../models/Course');
 
 /*
 =================================================
-GET ALL / GET BY ROLE (DITAPIS KETAT)
+1. GET COURSES BY ROLE & USERID
 =================================================
 */
 router.get('/', async (req, res) => {
@@ -12,31 +12,28 @@ router.get('/', async (req, res) => {
         const role = req.query.role;
         const userId = req.query.userId ? req.query.userId.trim() : null;
 
-        // Jika student: Hanya pulangkan kursus yang ada studentId mereka dalam array 'students'
         if (role === 'student' && userId) {
             const courses = await Course.find({ students: userId });
             return res.status(200).json(courses);
         }
 
-        // Jika lecturer: Hanya pulangkan kursus milik lecturer tersebut
         if (role === 'lecturer' && userId) {
             const courses = await Course.find({ lecturerId: userId });
             return res.status(200).json(courses);
         }
 
-        // Jika admin atau peranan lain: Lihat semua kursus
         const allCourses = await Course.find({});
         return res.status(200).json(allCourses);
 
     } catch (error) {
-        console.error(error);
+        console.error("Ralat GET /api/courses:", error);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
 /*
 =================================================
-CREATE COURSE
+2. CREATE COURSE
 =================================================
 */
 router.post('/', async (req, res) => {
@@ -52,7 +49,7 @@ router.post('/', async (req, res) => {
             courseCode: courseCode ? courseCode.trim() : courseCode,
             description,
             lecturerId: lecturerId ? lecturerId.trim() : lecturerId,
-            students: [] // Pastikan bermula dengan array kosong
+            students: [] 
         });
 
         await course.save();
@@ -64,7 +61,7 @@ router.post('/', async (req, res) => {
 
 /*
 =================================================
-UPDATE COURSE
+3. UPDATE COURSE
 =================================================
 */
 router.put('/:id', async (req, res) => {
@@ -90,7 +87,7 @@ router.put('/:id', async (req, res) => {
 
 /*
 =================================================
-DELETE COURSE
+4. DELETE COURSE
 =================================================
 */
 router.delete('/:id', async (req, res) => {
@@ -111,16 +108,17 @@ router.delete('/:id', async (req, res) => {
 
 /*
 =================================================
-ENROLL STUDENT (Diselaraskan dengan panggilan frontend)
+5. ENROLL STUDENT (DISELARESKAN NAMA FIELD)
 =================================================
 */
 router.post('/enroll', async (req, res) => {
     try {
         const courseCode = req.body.courseCode ? req.body.courseCode.trim() : null;
-        const studentId = req.body.userId ? req.body.userId.trim() : null; // Terima parameter 'userId' dari frontend
+        // DISELARESKAN: Membaca 'userId' dari body request frontend
+        const userId = req.body.userId ? req.body.userId.trim() : null; 
 
-        if (!courseCode || !studentId) {
-            return res.status(400).json({ error: "Course code and Student ID are required." });
+        if (!courseCode || !userId) {
+            return res.status(400).json({ error: "Course code and Student ID (userId) are required." });
         }
 
         const course = await Course.findOne({ courseCode: courseCode });
@@ -133,12 +131,11 @@ router.post('/enroll', async (req, res) => {
             course.students = [];
         }
 
-        // Semak sekiranya pelajar sudah mendaftar untuk mengelakkan pertindihan
-        if (course.students.includes(studentId)) {
+        if (course.students.includes(userId)) {
             return res.status(400).json({ error: "You are already enrolled in this course." });
         }
 
-        course.students.push(studentId);
+        course.students.push(userId);
         await course.save();
 
         return res.status(200).json({ success: true, message: "Enrollment successful." });
