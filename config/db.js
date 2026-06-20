@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
 const path = require('path');
 
-// Menguruskan pembacaan .env untuk lokal laptop secara dinamik mengikut root folder
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const connectDB = async () => {
   try {
-    // Render akan terus ambil dari Environment Variables dashboard jika ada, 
-    // jika tiada baru ia semak fail .env lokal
+
     const uri = process.env.MONGO_URI;
     
     if (!uri) {
